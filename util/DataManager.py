@@ -20,7 +20,7 @@ class DataManager:
     def load_word2vec(self):
         #load word2vec from file
         #Two data structure: word2index, index2vector
-        wordvector = list(open("../data/vector1.txt", "r").readlines())
+        wordvector = list(open("data/vector1.txt", "r").readlines())
         wordvector = [s.split() for s in wordvector]
         self.wordvector_dim = len(wordvector[0])-1
         self.word2index["UNK"] = 0
@@ -39,7 +39,7 @@ class DataManager:
 
     def load_relations(self):
         #load relation from file
-        relation_data = list(open("../data/RE/relation2id.txt").readlines())
+        relation_data = list(open("data/RE/relation2id.txt").readlines())
         relation_data = [s.split() for s in relation_data]
         for relation in relation_data:
             r = Relation(relation[0], int(relation[1]))
@@ -48,9 +48,9 @@ class DataManager:
             self.relations[r].generate_vector(len(self.relations))
         print("RelationTotal: "+str(len(self.relations)))
 
-    def load_training_data(self, filename="../data/RE/train.txt", distant_supervision=True):
+    def load_training_data(self, filename="data/RE/train.txt", distant_supervision=True):
         #load training data from file
-        f = open("../data/RE/entity2id.txt", "a")
+        f = open("data/RE/entity2id.txt", "a")
         print("Start loading training data.")
         print("====================")
         training_data = list(open(filename).readlines())
@@ -79,7 +79,7 @@ class DataManager:
         #load training data from file
         print("Start loading testing data.")
         print("====================")
-        testing_data = list(open("../data/RE/test.txt").readlines())
+        testing_data = list(open("data/RE/test.txt").readlines())
         testing_data = [s.split() for s in testing_data]
         #for data in testing_data:
         for data in testing_data:
