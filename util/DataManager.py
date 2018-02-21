@@ -176,7 +176,7 @@ class DataManager:
                 p22.append(b+31)
             a = self.sequence_length-len(p11)
             if a > 0:
-                front = a/2
+                front = int(a/2)
                 back = a-front
                 front_vec = [0 for i in range(front)]
                 back_vec = [0 for i in range(back)]
