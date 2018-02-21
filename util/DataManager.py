@@ -193,7 +193,7 @@ class DataManager:
     def padding(self, vectors):
         a = self.sequence_length-len(vectors)
         if a > 0:
-            front = a/2
+            front = int(a/2)
             back = a-front
             front_vec = [np.zeros(self.wordvector_dim) for i in range(front)]
             back_vec = [np.zeros(self.wordvector_dim) for i in range(back)]
