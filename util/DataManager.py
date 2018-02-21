@@ -203,7 +203,7 @@ class DataManager:
         return vectors
 
     def word2num(self, words):
-        return [self.words2index[w] for w in words]
+        return [self.word2index[w] for w in words]
 
 def __init__():
     return 0
