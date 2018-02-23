@@ -59,7 +59,7 @@ dev = training_data[-1000:]
 print("Start Training")
 with tf.Graph().as_default():
     session_conf = tf.ConfigProto(
-      allow_soft_placement=FLAGS.allow_soft_placement,
+      # allow_soft_placement=FLAGS.allow_soft_placement,
       log_device_placement=FLAGS.log_device_placement)
     session_conf.gpu_options.allow_growth = True
     sess = tf.Session(config=session_conf)
