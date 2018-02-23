@@ -10,7 +10,7 @@ class RECnn(object):
       self, sequence_length, num_classes,
       embedding_size, position_size, filter_sizes, num_filters, l2_reg_lambda=0.0):
 
-        with tf.Graph().as_default():
+        # with tf.device('/gpu:1'):
             # Placeholders for input, output and dropout
             self.input_x = tf.placeholder(tf.float32, [None, sequence_length, embedding_size], name="input_x")
             self.input_p1 = tf.placeholder(tf.int32, [None, sequence_length], name="input_p1")
