@@ -1,14 +1,13 @@
 #! /usr/bin/env python
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 import tensorflow as tf
 import numpy as np
 import time
-import datetime
 from Cnn import RECnn
 from test import test
-from util.DataManager import DataManager
+from util.DataManager import DataManager, batch_iter, generate_y
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Parameters
 # ==================================================
@@ -31,7 +30,7 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 FLAGS = tf.flags.FLAGS
-FLAGS._parse_flags()
+# FLAGS._parse_flags()
 print("\nParameters:")
 for attr, value in sorted(FLAGS.__flags.items()):
     print("{}={}".format(attr.upper(), value))
@@ -43,7 +42,7 @@ datamanager = DataManager(FLAGS.sequence_length)
 training_data = datamanager.load_training_data()
 training_data = np.array(training_data)
 testing_data = datamanager.load_testing_data()
-print(str(len(training_data))+" "+str(len(testing_data)))
+print(str(len(training_data)) + " " + str(len(testing_data)))
 
 # Random shuffle data
 np.random.seed(10)
@@ -94,61 +93,66 @@ with tf.Graph().as_default():
         # Initialize all variables
         sess.run(tf.global_variables_initializer())
 
-        def train_step(x_batch, y_batch, p1_batch, p2_batch):
-            """
-            A single training step
-            """
-            feed_dict = {
-              cnn.input_x: x_batch,
-              cnn.input_y: y_batch,
-              cnn.input_p1: p1_batch,
-              cnn.input_p2: p2_batch,
-              cnn.dropout_keep_prob: FLAGS.dropout_keep_prob
-            }
-            _, step, loss, accuracy = sess.run(
-                [train_op, global_step, cnn.loss, cnn.accuracy],
-                feed_dict)
-            time_str = datetime.datetime.now().isoformat()
-            #print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
-            return loss
 
-        def dev_step(x_batch, y_batch, p1_batch, p2_batch):
+        def train_step(_x_batch, _y_batch, _p1_batch, _p2_batch):
             """
             A single training step
             """
             feed_dict = {
-              cnn.input_x: x_batch,
-              cnn.input_y: y_batch,
-              cnn.input_p1: p1_batch,
-              cnn.input_p2: p2_batch,
-              cnn.dropout_keep_prob: 1
+                cnn.input_x: _x_batch,
+                cnn.input_y: _y_batch,
+                cnn.input_p1: _p1_batch,
+                cnn.input_p2: _p2_batch,
+                cnn.dropout_keep_prob: FLAGS.dropout_keep_prob
             }
-            _, step, loss, accuracy = sess.run(
+            _, step, _loss, accuracy = sess.run(
                 [train_op, global_step, cnn.loss, cnn.accuracy],
                 feed_dict)
-            print("step {}, loss {:g}, acc {:g}".format(step, loss, accuracy))
+            # time_str = datetime.datetime.now().isoformat()
+            # print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
+            return _loss
+
+
+        def dev_step(_x_batch, _y_batch, _p1_batch, _p2_batch):
+            """
+            A single training step
+            """
+            feed_dict = {
+                cnn.input_x: _x_batch,
+                cnn.input_y: _y_batch,
+                cnn.input_p1: _p1_batch,
+                cnn.input_p2: _p2_batch,
+                cnn.dropout_keep_prob: 1
+            }
+            _, step, _loss, accuracy = sess.run(
+                [train_op, global_step, cnn.loss, cnn.accuracy],
+                feed_dict)
+            print("step {}, loss {:g}, acc {:g}".format(step, _loss, accuracy))
+
 
         # Generate batches
-        batches = datamanager.batch_iter(
+        batches = batch_iter(
             train, FLAGS.batch_size, FLAGS.num_epochs)
-        num_batches_per_epoch = int(len(train)/FLAGS.batch_size) + 1
+        num_batches_per_epoch = int(len(train) / FLAGS.batch_size) + 1
         print("Batch data")
         # Training loop. For each batch...
         num_batch = 1
         num_epoch = 1
         dev_x_batch = datamanager.generate_x(dev)
         dev_p1_batch, dev_p2_batch = datamanager.generate_p(dev)
-        dev_y_batch = datamanager.generate_y(dev)
+        dev_y_batch = generate_y(dev)
+        current_step = None
         for batch in batches:
             if num_batch == num_batches_per_epoch:
                 num_epoch += 1
                 num_batch = 1
-                test(testing_data, cnn.input_x, cnn.input_p1, cnn.input_p2, cnn.scores, cnn.predictions, cnn.dropout_keep_prob, datamanager, sess, num_epoch)
+                test(testing_data, cnn.input_x, cnn.input_p1, cnn.input_p2, cnn.scores, cnn.predictions,
+                     cnn.dropout_keep_prob, datamanager, sess, num_epoch)
                 path = saver.save(sess, checkpoint_prefix, global_step=current_step)
             num_batch += 1
             x_batch = datamanager.generate_x(batch)
             p1_batch, p2_batch = datamanager.generate_p(batch)
-            y_batch = datamanager.generate_y(batch)
+            y_batch = generate_y(batch)
             loss = train_step(x_batch, y_batch, p1_batch, p2_batch)
             current_step = tf.train.global_step(sess, global_step)
             if current_step % FLAGS.evaluate_every == 0:

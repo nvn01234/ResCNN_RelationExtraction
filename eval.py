@@ -1,14 +1,10 @@
 #! /usr/bin/env python
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 import tensorflow as tf
-import numpy as np
-import time
-import datetime
-from Cnn import RECnn
 from test import test
 from util.DataManager import DataManager
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # Parameters
 # ==================================================
 
@@ -31,7 +27,7 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 FLAGS = tf.flags.FLAGS
-FLAGS._parse_flags()
+# FLAGS._parse_flags()
 print("\nParameters:")
 for attr, value in sorted(FLAGS.__flags.items()):
     print("{}={}".format(attr.upper(), value))
@@ -68,6 +64,5 @@ with graph.as_default():
         # Tensors we want to evaluate
         s = graph.get_operation_by_name("output/scores").outputs[0]
         p = graph.get_operation_by_name("output/predictions").outputs[0]
-
 
         test(testing_data, input_x, input_p1, input_p2, s, p, dropout_keep_prob, datamanager, sess, -1)
