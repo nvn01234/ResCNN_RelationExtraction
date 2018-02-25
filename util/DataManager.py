@@ -92,7 +92,7 @@ class DataManager:
                          entity2,
                          relation,
                          data[5:-1])
-            tup = (entity1, entity2)
+            tup = " ".join([entity1, entity2])
             if tup not in self.bags_test:
                 self.bags_test[tup] = [s]
             else:
