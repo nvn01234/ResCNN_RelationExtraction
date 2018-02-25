@@ -39,18 +39,25 @@ class DataManager:
 
     def load_relations(self):
         #load relation from file
-        relation_data = list(open("data/RE/relation2id.txt").readlines())
-        relation_data = [s.split() for s in relation_data]
-        for relation in relation_data:
-            r = Relation(relation[0], int(relation[1]))
-            self.relations[relation[0]] = r
+        relation_data = {'Other': 0,
+                         'Message-Topic(e1,e2)': 1, 'Message-Topic(e2,e1)': 2,
+                         'Product-Producer(e1,e2)': 3, 'Product-Producer(e2,e1)': 4,
+                         'Instrument-Agency(e1,e2)': 5, 'Instrument-Agency(e2,e1)': 6,
+                         'Entity-Destination(e1,e2)': 7, 'Entity-Destination(e2,e1)': 8,
+                         'Cause-Effect(e1,e2)': 9, 'Cause-Effect(e2,e1)': 10,
+                         'Component-Whole(e1,e2)': 11, 'Component-Whole(e2,e1)': 12,
+                         'Entity-Origin(e1,e2)': 13, 'Entity-Origin(e2,e1)': 14,
+                         'Member-Collection(e1,e2)': 15, 'Member-Collection(e2,e1)': 16,
+                         'Content-Container(e1,e2)': 17, 'Content-Container(e2,e1)': 18}
+        for k, v in relation_data.items():
+            r = Relation(k, v)
+            self.relations[k] = r
         for r in self.relations:
             self.relations[r].generate_vector(len(self.relations))
         print("RelationTotal: "+str(len(self.relations)))
 
-    def load_training_data(self, filename="data/RE/train.txt", distant_supervision=True):
+    def load_training_data(self, filename="data/TRAIN_FILE.TXT"):
         #load training data from file
-        f = open("data/RE/entity2id.txt", "a")
         print("Start loading training data.")
         print("====================")
         training_data = list(open(filename).readlines())

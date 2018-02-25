@@ -111,3 +111,5 @@ data/*
 /*.txt
 runs
 metrics
+!data/TEST_FILE_FULL.TXT
+!data/TRAIN_FILE.TXT
