@@ -22,7 +22,7 @@ def test(testing_data, input_x, input_p1, input_p2, s, p, dropout_keep_prob, dat
             prediction = np.argmax(score)
     for i in range(len(testing_data)):
         results.append((test, testing_data[i].relation.id, max_pro, prediction))
-        if testing_data[i].relation.id == pre and pre != 0:
+        if testing_data[i].relation.id == prediction and prediction != 0:
             c += 1
         t += 1
         if testing_data[i].relation.id != 0:
