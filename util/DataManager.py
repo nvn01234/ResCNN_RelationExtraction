@@ -50,7 +50,6 @@ class DataManager:
 
     def load_training_data(self, filename="data/RE/train.txt", distant_supervision=True):
         #load training data from file
-        f = open("data/RE/entity2id.txt", "a")
         print("Start loading training data.")
         print("====================")
         training_data = list(open(filename).readlines())
@@ -93,10 +92,11 @@ class DataManager:
                          entity2,
                          relation,
                          data[5:-1])
-            if data[0]+"\t"+data[1] not in self.bags_test:
-                self.bags_test[entity1+" "+entity2] = [s]
+            tup = (entity1, entity2)
+            if tup not in self.bags_test:
+                self.bags_test[tup] = [s]
             else:
-                self.bags_test[entity1+" "+entity2].append(s)
+                self.bags_test[tup].append(s)
         return self.bags_test
 
     def relation_analyze(self):
