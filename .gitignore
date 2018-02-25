@@ -108,3 +108,6 @@ venv.bak/
 .idea
 data/*
 !data/data.zip
+/*.txt
+runs
+metrics
