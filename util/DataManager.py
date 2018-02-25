@@ -189,7 +189,7 @@ class DataManager:
                         tmp.append(self.index2vector[self.word2index["UNK"]])
                     else:
                         tmp.append(self.index2vector[self.word2index[_w]])
-                tmp = np.average(w, axis=0)
+                tmp = np.average(tmp, axis=0)
                 v.append(tmp)
             vectors = self.padding(v)
             x.append(vectors)
