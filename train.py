@@ -14,7 +14,7 @@ from util.DataManager import DataManager
 # ==================================================
 
 # Model Hyperparameters
-tf.flags.DEFINE_integer("embedding_dim", 50, "Dimensionality of character embedding (default: 50)")
+tf.flags.DEFINE_integer("embedding_dim", 300, "Dimensionality of character embedding (default: 50)")
 tf.flags.DEFINE_integer("sequence_length", 100, "Sequence length (default: 100)")
 tf.flags.DEFINE_string("filter_sizes", "3", "Comma-separated filter sizes (default: '3')")
 tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")

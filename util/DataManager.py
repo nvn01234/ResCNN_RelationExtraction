@@ -1,8 +1,48 @@
 import numpy as np
 import nltk
 import itertools
+
+from gensim.models import KeyedVectors
+
 from .Relation import Relation
 from .Sentence import Sentence
+from html.parser import HTMLParser
+from nltk import word_tokenize
+
+class SemEvalParser(HTMLParser):
+    def __init__(self):
+        super(SemEvalParser, self).__init__()
+        self.data = []
+        self.e1 = None
+        self.e2 = None
+        self.e1pos = 0
+        self.e2pos = 0
+
+    def handle_starttag(self, tag, attrs):
+        super(SemEvalParser, self).handle_starttag(tag, attrs)
+        setattr(self, tag, True)
+
+    def handle_data(self, data):
+        super(SemEvalParser, self).handle_data(data)
+        data = data.strip()
+        if self.e1 is True:
+            data = "e1_" + data.replace(" ", "_")
+            self.e1 = data
+        elif self.e2 is True:
+            data = "e2_" + data.replace(" ", "_")
+            self.e2 = data
+        self.data.append(data)
+
+    def tokenize(self):
+        tokens = word_tokenize(" ".join(self.data))
+        for i, w in enumerate(tokens):
+            if w == self.e1:
+                self.e1pos = i
+            if w == self.e2:
+                self.e2pos = i
+        self.tokens = [t[3:] if t.startswith("e1_") or t.startswith("e2_") else t for t in tokens]
+        self.e1 = self.e1[3:]
+        self.e2 = self.e2[3:]
 
 class DataManager:
     def __init__(self, sequence_length):
@@ -11,28 +51,23 @@ class DataManager:
         self.word2index = {}
         self.index2vector = []
         self.relations = {}
-        self.bags_train = {}
         self.training_data = []
-        self.bags_test = {}
+        self.testing_data = []
         self.load_word2vec()
         self.load_relations()
 
     def load_word2vec(self):
         #load word2vec from file
         #Two data structure: word2index, index2vector
-        wordvector = list(open("data/vector1.txt", "r").readlines())
-        wordvector = [s.split() for s in wordvector]
-        self.wordvector_dim = len(wordvector[0])-1
-        self.word2index["UNK"] = 0
+        wordvector = KeyedVectors.load_word2vec_format("data/GoogleNews-vectors-negative300.bin", binary=True)
+        self.wordvector_dim = 300
+        self.word2index["PAD"] = 0
+        self.word2index["UNK"] = 1
         self.index2vector.append(np.zeros(self.wordvector_dim))
-        index = 1
-        for vec in wordvector:
-            a = np.zeros(self.wordvector_dim)
-            for i in range(self.wordvector_dim):
-                a[i] = float(vec[i+1])
-            self.word2index[vec[0]] = index
-            self.index2vector.append(a)
-            index += 1
+        self.index2vector.append(np.random.uniform(-0.25, 0.25, self.wordvector_dim))
+        for w in wordvector.index2word:
+            self.word2index[w] = len(self.word2index)
+            self.index2vector.append(wordvector.word_vec(w))
 
         print("WordTotal=\t", len(self.index2vector))
         print("Word dimension=\t", self.wordvector_dim)
@@ -60,51 +95,53 @@ class DataManager:
         #load training data from file
         print("Start loading training data.")
         print("====================")
-        training_data = list(open(filename).readlines())
-        training_data = [s.split() for s in training_data]
+        with open(filename, "r", encoding="utf8") as f:
+            training_data = f.read().strip().split("\n\n")
         for data in training_data:
-            entity1 = data[2]
-            entity2 = data[3]
-            if data[4] not in self.relations:
-                relation = self.relations["NA"]
+            line1, r, _ = data.strip().split("\n")
+            if r in self.relations:
+                r = self.relations[r]
             else:
-                relation = self.relations[data[4]]
-            s = Sentence(entity1,
-                         entity2,
-                         relation,
-                         data[5:-1])
+                r = self.relations["NA"]
+            text = line1.strip().split("\t")[1][1:-1]
+            parser = SemEvalParser()
+            parser.feed(text)
+            parser.tokenize()
+            s = Sentence(
+                parser.e1,
+                parser.e2,
+                r,
+                parser.tokens
+            )
             self.training_data.append(s)
-            '''
-            if (data[0]+"\t"+data[1]+"\t"+data[4]) not in self.bags_train:
-                self.bags_train[data[0]+"\t"+data[1]+"\t"+data[4]] = [s]
-            else:
-                self.bags_train[data[0]+"\t"+data[1]+"\t"+data[4]].append(s)
-            '''
+
         return self.training_data
 
     def load_testing_data(self):
         #load training data from file
         print("Start loading testing data.")
         print("====================")
-        testing_data = list(open("data/RE/test.txt").readlines())
-        testing_data = [s.split() for s in testing_data]
+        with open("data/TEST_FILE_FULL.TXT", "r", encoding="utf8") as f:
+            testing_data = f.read().strip().split("\n\n")
         #for data in testing_data:
         for data in testing_data:
-            entity1 = data[2]
-            entity2 = data[3]
-            if data[4] not in self.relations:
-                relation = self.relations["NA"]
+            line1, r, _ = data.strip().split("\n")
+            if r in self.relations:
+                r = self.relations[r]
             else:
-                relation = self.relations[data[4]]
-            s = Sentence(entity1,
-                         entity2,
-                         relation,
-                         data[5:-1])
-            if data[0]+"\t"+data[1] not in self.bags_test:
-                self.bags_test[entity1+" "+entity2] = [s]
-            else:
-                self.bags_test[entity1+" "+entity2].append(s)
-        return self.bags_test
+                r = self.relations["NA"]
+            text = line1.strip().split("\t")[1][1:-1]
+            parser = SemEvalParser()
+            parser.feed(text)
+            parser.tokenize()
+            s = Sentence(
+                parser.e1,
+                parser.e2,
+                r,
+                parser.tokens
+            )
+            self.testing_data.append(s)
+        return self.testing_data
 
     def relation_analyze(self):
         for r in self.relations:
@@ -140,10 +177,14 @@ class DataManager:
             e1 = d.entity1
             e2 = d.entity2
             for i, w in enumerate(words):
-                if w not in self.word2index:
-                    tmp = self.index2vector[0]
-                else:
-                    tmp = self.index2vector[self.word2index[w]]
+                w = w.split("_")
+                tmp = []
+                for _w in w:
+                    if _w not in self.word2index:
+                        tmp.append(self.index2vector[self.word2index["UNK"]])
+                    else:
+                        tmp.append(self.index2vector[self.word2index[_w]])
+                tmp = np.average(w, axis=0)
                 v.append(tmp)
             vectors = self.padding(v)
             x.append(vectors)
